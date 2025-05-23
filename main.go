@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	dbPath := "tshirts.db"
+	dbPath := "tshirtshop.db"
 	if envPath := os.Getenv("TSHIRT_DB_PATH"); envPath != "" {
 		dbPath = envPath
 	}
@@ -28,23 +28,34 @@ func main() {
 		log.Fatal("failed to migrate db:", err)
 	}
 
-	repo := repository.NewTShirtRepository(db)
-	srv := service.NewTShirtService(repo)
-	h := handler.NewTShirtHandler(srv)
+	userRepo := repository.NewUserRepository(db)
+	userSrv := service.NewUserService(userRepo)
+	userHandle := handler.NewUserHandler(userSrv)
+
+	tShirtRepo := repository.NewTShirtRepository(db)
+	tShirtSrv := service.NewTShirtService(tShirtRepo)
+	tShirtHandle := handler.NewTShirtHandler(tShirtSrv)
 
 	r := gin.Default()
 
-	r.POST("/login", handler.Login)
+	r.POST("/login", userHandle.Login)
+	r.POST("/register", userHandle.Register)
 
-	r.GET("/tshirts", h.ListTShirts)
-	r.GET("/tshirts/:id", h.GetTShirt)
+	r.GET("/tshirts", tShirtHandle.ListTShirts)
+	r.GET("/tshirts/:id", tShirtHandle.GetTShirt)
 
 	admin := r.Group("/admin")
 	admin.Use(handler.JWTAuthMiddleware())
 	{
-		admin.POST("/tshirts", h.CreateTShirt)
-		admin.PUT("/tshirts/:id", h.UpdateTShirt)
-		admin.DELETE("/tshirts/:id", h.DeleteTShirt)
+		admin.POST("/tshirts", tShirtHandle.CreateTShirt)
+		admin.PUT("/tshirts/:id", tShirtHandle.UpdateTShirt)
+		admin.DELETE("/tshirts/:id", tShirtHandle.DeleteTShirt)
+
+		admin.GET("/users", userHandle.ListUsers)
+		admin.GET("/users/:id", userHandle.GetUser)
+		admin.POST("/users", userHandle.CreateUser)
+		admin.PUT("/users/:id", userHandle.UpdateUser)
+		admin.DELETE("/users/:id", userHandle.DeleteUser)
 	}
 
 	log.Println("Server running on :8080")

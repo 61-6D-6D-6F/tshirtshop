@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"database/sql"
-	"os"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -10,19 +8,7 @@ import (
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
 )
 
-func setupTestDB(t *testing.T) *sql.DB {
-	os.Remove("test.db")
-	db, err := sql.Open("sqlite3", "test.db")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := InitDB(db); err != nil {
-		t.Fatal(err)
-	}
-	return db
-}
-
-func TestUserRepository_CRUD(t *testing.T) {
+func TestTShirtRepository_CRUD(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
 	repo := NewTShirtRepository(db)

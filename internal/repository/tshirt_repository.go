@@ -7,20 +7,6 @@ import (
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
 )
 
-func InitDB(db *sql.DB) error {
-	_, err := db.Exec(`
-    CREATE TABLE IF NOT EXISTS tshirts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        size TEXT,
-        color TEXT,
-        price REAL,
-        stock INTEGER
-    )
-    `)
-	return err
-}
-
 type TShirtRepository interface {
 	List() ([]*model.TShirt, error)
 	Get(int) (*model.TShirt, error)
