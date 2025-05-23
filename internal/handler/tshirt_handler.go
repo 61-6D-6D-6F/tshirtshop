@@ -19,24 +19,44 @@ func NewTShirtHandler(s service.TShirtService) *TShirtHandler {
 }
 
 func (h *TShirtHandler) ListTShirts(c *gin.Context) {
-	tshirts, err := h.tShirtService.ListTShirts()
+	tShirts, err := h.tShirtService.ListTShirts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, tshirts)
+	c.JSON(http.StatusOK, tShirts)
+}
+
+func (h *TShirtHandler) GetTShirt(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	tShirt, err := h.tShirtService.GetTShirt(id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, tShirt)
 }
 
 func (h *TShirtHandler) CreateTShirt(c *gin.Context) {
-	var tshirt model.TShirt
-	if err := c.ShouldBindJSON(&tshirt); err != nil {
+	var tShirt model.TShirt
+	if err := c.ShouldBindJSON(&tShirt); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.tShirtService.CreateTShirt(tshirt); err != nil {
+	if tShirt.Name == "" || tShirt.Size == "" || tShirt.Color == "" ||
+		tShirt.Price == 0.0 || tShirt.Stock == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+	if err := h.tShirtService.CreateTShirt(&tShirt); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusCreated, tShirt)
 }
 
 func (h *TShirtHandler) UpdateTShirt(c *gin.Context) {
@@ -50,10 +70,16 @@ func (h *TShirtHandler) UpdateTShirt(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.tShirtService.UpdateTShirt(id, tShirt); err != nil {
+	if tShirt.Name == "" || tShirt.Size == "" || tShirt.Color == "" ||
+		tShirt.Price == 0.0 || tShirt.Stock == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+	if err := h.tShirtService.UpdateTShirt(id, &tShirt); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(http.StatusOK, tShirt)
 }
 
 func (h *TShirtHandler) DeleteTShirt(c *gin.Context) {
