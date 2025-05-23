@@ -29,6 +29,11 @@ func TestUserRepository_CRUD(t *testing.T) {
 	if err != nil || got.Username != "bob" {
 		t.Fatalf("login failed: %v, %+v", err, got)
 	}
+	// Register same username
+	err = repo.TryRegister(user)
+	if err == nil {
+		t.Fatalf("register existed failed: %v", err)
+	}
 	// Update
 	user.Username = "john"
 	if err := repo.Update(2, user); err != nil {
@@ -50,5 +55,10 @@ func TestUserRepository_CRUD(t *testing.T) {
 	_, err = repo.Get(2)
 	if err == nil {
 		t.Fatalf("should be not found after delete")
+	}
+	// Register
+	err = repo.TryRegister(user)
+	if err != nil {
+		t.Fatalf("register new failed: %v", err)
 	}
 }
