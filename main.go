@@ -37,6 +37,7 @@ func main() {
 	r.POST("/login", handler.Login)
 
 	r.GET("/tshirts", h.ListTShirts)
+	r.GET("/tshirts/:id", h.GetTShirt)
 
 	admin := r.Group("/admin")
 	admin.Use(handler.JWTAuthMiddleware())

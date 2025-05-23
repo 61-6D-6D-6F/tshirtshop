@@ -1,16 +1,15 @@
 package service
 
 import (
-	"errors"
-
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
 	"github.com/61-6D-6D-6F/tshirtshop/internal/repository"
 )
 
 type TShirtService interface {
-	ListTShirts() ([]model.TShirt, error)
-	CreateTShirt(model.TShirt) error
-	UpdateTShirt(int, model.TShirt) error
+	ListTShirts() ([]*model.TShirt, error)
+	GetTShirt(int) (*model.TShirt, error)
+	CreateTShirt(*model.TShirt) error
+	UpdateTShirt(int, *model.TShirt) error
 	DeleteTShirt(int) error
 }
 
@@ -22,23 +21,19 @@ func NewTShirtService(r repository.TShirtRepository) TShirtService {
 	return &tShirtService{repo: r}
 }
 
-func (s *tShirtService) ListTShirts() ([]model.TShirt, error) {
+func (s *tShirtService) ListTShirts() ([]*model.TShirt, error) {
 	return s.repo.List()
 }
 
-func (s *tShirtService) CreateTShirt(tShirt model.TShirt) error {
-	if tShirt.Name == "" || tShirt.Size == "" || tShirt.Color == "" ||
-		tShirt.Price == 0.0 || tShirt.Stock == 0 {
-		return errors.New("error: Invalid input")
-	}
+func (s *tShirtService) GetTShirt(id int) (*model.TShirt, error) {
+	return s.repo.Get(id)
+}
+
+func (s *tShirtService) CreateTShirt(tShirt *model.TShirt) error {
 	return s.repo.Save(tShirt)
 }
 
-func (s *tShirtService) UpdateTShirt(id int, tShirt model.TShirt) error {
-	if tShirt.Name == "" || tShirt.Size == "" || tShirt.Color == "" ||
-		tShirt.Price == 0.0 || tShirt.Stock == 0 {
-		return errors.New("error: Invalid input")
-	}
+func (s *tShirtService) UpdateTShirt(id int, tShirt *model.TShirt) error {
 	return s.repo.Update(id, tShirt)
 }
 
