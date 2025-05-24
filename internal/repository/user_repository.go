@@ -1,9 +1,10 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 
-	"database/sql"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
 )
@@ -55,14 +56,23 @@ func (r *userRepository) Get(id int) (*model.User, error) {
 }
 
 func (r *userRepository) Save(user *model.User) error {
-	_, err := r.db.Exec("INSERT INTO users (username, password, email, is_admin) VALUES (?, ?, ?, ?)",
-		user.Username, user.Password, user.Email, 0)
+	hashedPassword, err := hashPassword(user.Password)
+	_, err = r.db.Exec("INSERT INTO users (username, password, email, is_admin) VALUES (?, ?, ?, ?)",
+		user.Username, hashedPassword, user.Email, 0)
 	return err
 }
 
 func (r *userRepository) Update(id int, user *model.User) error {
+	var hashedPassword string
+	err := r.db.QueryRow("SELECT password FROM users WHERE id = ?", id).Scan(hashedPassword)
+	if err == sql.ErrNoRows {
+		return errors.New("error: Not found")
+	}
+	if user.Password != hashedPassword {
+		hashedPassword, err = hashPassword(user.Password)
+	}
 	res, err := r.db.Exec("UPDATE users SET username=?, password=?, email=? WHERE id=?",
-		user.Username, user.Password, user.Email, id)
+		user.Username, hashedPassword, user.Email, id)
 	if err != nil {
 		return err
 	}
@@ -92,7 +102,7 @@ func (r *userRepository) TryLogin(username string, password string) (*model.User
 	if err := row.Scan(&user.Username, &user.Password, &user.Email, &isAdmin); err != nil {
 		return &user, errors.New("error: Not found")
 	}
-	if user.Password != password {
+	if !verifyPassword(password, user.Password) {
 		return &user, errors.New("error: Password mismatch")
 	}
 	user.IsAdmin = isAdmin == 1
@@ -105,10 +115,21 @@ func (r *userRepository) TryRegister(user *model.User) error {
 	if exists != 0 {
 		return errors.New("error: Username exist")
 	}
-	_, err := r.db.Exec("INSERT INTO users (username, password, email, is_admin) VALUES (?, ?, ?, ?)",
-		user.Username, user.Password, user.Email, 0)
+	hashedPassword, err := hashPassword(user.Password)
+	_, err = r.db.Exec("INSERT INTO users (username, password, email, is_admin) VALUES (?, ?, ?, ?)",
+		user.Username, hashedPassword, user.Email, 0)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func hashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hashedPassword), err
+}
+
+func verifyPassword(password string, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

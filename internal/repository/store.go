@@ -26,9 +26,13 @@ func InitDB(db *sql.DB) error {
 	);
     `)
 	// Ensure admin exists
-	var adminPassword = []byte("pass123")
+	var adminPassword = "pass123"
+	adminPassword, err = hashPassword(adminPassword)
+	if err != nil {
+		return err
+	}
 	if pass := os.Getenv("TSHIRT_ADMIN_PASS"); pass != "" {
-		adminPassword = []byte(pass)
+		adminPassword, err = hashPassword(pass)
 	}
 	var exists int
 	_ = db.QueryRow("SELECT COUNT(*) FROM users WHERE username = 'admin'").Scan(&exists)
