@@ -21,3 +21,13 @@ type Credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
+
+type CartItem struct {
+	TShirtID int `json:"tshirt_id"`
+	Quantity int `json:"quantity"`
+}
+
+type Cart struct {
+	UserID int        `json:"user_id"`
+	Items  []CartItem `json:"items"`
+}

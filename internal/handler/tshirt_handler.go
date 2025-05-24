@@ -7,19 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
-	"github.com/61-6D-6D-6F/tshirtshop/internal/service"
+	"github.com/61-6D-6D-6F/tshirtshop/internal/repository"
 )
 
 type TShirtHandler struct {
-	tShirtService service.TShirtService
+	tShirtRepository repository.TShirtRepository
 }
 
-func NewTShirtHandler(s service.TShirtService) *TShirtHandler {
-	return &TShirtHandler{tShirtService: s}
+func NewTShirtHandler(s repository.TShirtRepository) *TShirtHandler {
+	return &TShirtHandler{tShirtRepository: s}
 }
 
 func (h *TShirtHandler) ListTShirts(c *gin.Context) {
-	tShirts, err := h.tShirtService.ListTShirts()
+	tShirts, err := h.tShirtRepository.List()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -33,7 +33,7 @@ func (h *TShirtHandler) GetTShirt(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	tShirt, err := h.tShirtService.GetTShirt(id)
+	tShirt, err := h.tShirtRepository.Get(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -52,7 +52,7 @@ func (h *TShirtHandler) CreateTShirt(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	if err := h.tShirtService.CreateTShirt(&tShirt); err != nil {
+	if err := h.tShirtRepository.Save(&tShirt); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -75,7 +75,7 @@ func (h *TShirtHandler) UpdateTShirt(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	if err := h.tShirtService.UpdateTShirt(id, &tShirt); err != nil {
+	if err := h.tShirtRepository.Update(id, &tShirt); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -88,7 +88,7 @@ func (h *TShirtHandler) DeleteTShirt(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.tShirtService.DeleteTShirt(id); err != nil {
+	if err := h.tShirtRepository.Delete(id); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/61-6D-6D-6F/tshirtshop/internal/handler"
 	"github.com/61-6D-6D-6F/tshirtshop/internal/repository"
-	"github.com/61-6D-6D-6F/tshirtshop/internal/service"
 )
 
 func main() {
@@ -29,12 +28,13 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	userSrv := service.NewUserService(userRepo)
-	userHandle := handler.NewUserHandler(userSrv)
+	userHandle := handler.NewUserHandler(userRepo)
 
 	tShirtRepo := repository.NewTShirtRepository(db)
-	tShirtSrv := service.NewTShirtService(tShirtRepo)
-	tShirtHandle := handler.NewTShirtHandler(tShirtSrv)
+	tShirtHandle := handler.NewTShirtHandler(tShirtRepo)
+
+	cartRepo := repository.NewCartRepository(db)
+	cartHandle := handler.NewCartHandler(cartRepo)
 
 	r := gin.Default()
 
@@ -45,7 +45,7 @@ func main() {
 	r.GET("/tshirts/:id", tShirtHandle.GetTShirt)
 
 	admin := r.Group("/admin")
-	admin.Use(handler.JWTAuthMiddleware())
+	admin.Use(handler.AdminMiddleware())
 	{
 		admin.POST("/tshirts", tShirtHandle.CreateTShirt)
 		admin.PUT("/tshirts/:id", tShirtHandle.UpdateTShirt)
@@ -56,6 +56,14 @@ func main() {
 		admin.POST("/users", userHandle.CreateUser)
 		admin.PUT("/users/:id", userHandle.UpdateUser)
 		admin.DELETE("/users/:id", userHandle.DeleteUser)
+	}
+
+	cart := r.Group("/cart")
+	cart.Use(handler.JWTAuthMiddleware())
+	{
+		cart.GET("/:userid", cartHandle.GetCart)
+		cart.POST("/:userid/add", cartHandle.AddToCart)
+		cart.DELETE("/:userid/remove", cartHandle.RemoveFromCart)
 	}
 
 	log.Println("Server running on :8080")

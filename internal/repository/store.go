@@ -24,6 +24,12 @@ func InitDB(db *sql.DB) error {
 		email TEXT,
 		is_admin INTEGER
 	);
+    CREATE TABLE IF NOT EXISTS cart (
+		user_id INTEGER,
+		tshirt_id INTEGER,
+		quantity INTEGER,
+		PRIMARY KEY(user_id, tshirt_id)
+	);
     `)
 	// Ensure admin exists
 	var adminPassword = "pass123"
