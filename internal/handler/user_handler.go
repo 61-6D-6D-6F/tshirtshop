@@ -9,19 +9,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
-	"github.com/61-6D-6D-6F/tshirtshop/internal/service"
+	"github.com/61-6D-6D-6F/tshirtshop/internal/repository"
 )
 
 type UserHandler struct {
-	userService service.UserService
+	userRepository repository.UserRepository
 }
 
-func NewUserHandler(s service.UserService) *UserHandler {
-	return &UserHandler{userService: s}
+func NewUserHandler(s repository.UserRepository) *UserHandler {
+	return &UserHandler{userRepository: s}
 }
 
 func (h *UserHandler) ListUsers(c *gin.Context) {
-	users, err := h.userService.ListUsers()
+	users, err := h.userRepository.List()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -35,7 +35,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	user, err := h.userService.GetUser(id)
+	user, err := h.userRepository.Get(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -53,7 +53,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	if err := h.userService.CreateUser(&user); err != nil {
+	if err := h.userRepository.Save(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -75,7 +75,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
-	if err := h.userService.UpdateUser(id, &user); err != nil {
+	if err := h.userRepository.Update(id, &user); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -88,7 +88,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := h.userService.DeleteUser(id); err != nil {
+	if err := h.userRepository.Delete(id); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -102,26 +102,32 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.TryLogin(creds.Username, creds.Password)
+	user, err := h.userRepository.TryLogin(creds.Username, creds.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	if user.IsAdmin {
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-			"username": "admin",
+	var token *jwt.Token
+	switch user.IsAdmin {
+	case true:
+		token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"username": user.Username,
 			"role":     "admin",
 			"exp":      time.Now().Add(3 * time.Hour).Unix(),
 		})
-		tokenStr, err := token.SignedString(jwtSecret)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Token error"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"username": user.Username, "token": tokenStr, "is_admin": true})
+	case false:
+		token = jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+			"username": user.Username,
+			"role":     "user",
+			"exp":      time.Now().Add(3 * time.Hour).Unix(),
+		})
+	}
+	tokenStr, err := token.SignedString(jwtSecret)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Token error"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"username": user.Username, "is_admin": false})
+	c.JSON(http.StatusOK, gin.H{"username": user.Username, "token": tokenStr, "is_admin": user.IsAdmin})
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
@@ -130,10 +136,11 @@ func (h *UserHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := h.userService.TryRegister(&user)
+	err := h.userRepository.TryRegister(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	user.Password = ""
 	c.JSON(http.StatusOK, user)
 }
