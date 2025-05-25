@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 
-	"database/sql"
 	"github.com/61-6D-6D-6F/tshirtshop/internal/model"
 )
 
@@ -44,7 +44,8 @@ func (r *tShirtRepository) List() ([]*model.TShirt, error) {
 
 func (r *tShirtRepository) Get(id int) (*model.TShirt, error) {
 	var tShirt model.TShirt
-	err := r.db.QueryRow("SELECT id, name, size, color, price, stock FROM tshirts WHERE id = ?", id).Scan(&tShirt.ID, &tShirt.Name, &tShirt.Size, &tShirt.Color, &tShirt.Price, &tShirt.Stock)
+	err := r.db.QueryRow("SELECT id, name, size, color, price, stock FROM tshirts WHERE id = ?", id).
+		Scan(&tShirt.ID, &tShirt.Name, &tShirt.Size, &tShirt.Color, &tShirt.Price, &tShirt.Stock)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("error: Not found")
 	}

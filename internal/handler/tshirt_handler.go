@@ -14,8 +14,8 @@ type TShirtHandler struct {
 	tShirtRepository repository.TShirtRepository
 }
 
-func NewTShirtHandler(s repository.TShirtRepository) *TShirtHandler {
-	return &TShirtHandler{tShirtRepository: s}
+func NewTShirtHandler(r repository.TShirtRepository) *TShirtHandler {
+	return &TShirtHandler{tShirtRepository: r}
 }
 
 func (h *TShirtHandler) ListTShirts(c *gin.Context) {

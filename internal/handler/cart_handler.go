@@ -14,8 +14,8 @@ type CartHandler struct {
 	cartRepository repository.CartRepository
 }
 
-func NewCartHandler(s repository.CartRepository) *CartHandler {
-	return &CartHandler{cartRepository: s}
+func NewCartHandler(r repository.CartRepository) *CartHandler {
+	return &CartHandler{cartRepository: r}
 }
 
 func (h *CartHandler) GetCart(c *gin.Context) {
@@ -63,6 +63,10 @@ func (h *CartHandler) RemoveFromCart(c *gin.Context) {
 	var cartItem model.CartItem
 	if err := c.ShouldBindJSON(&cartItem); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if cartItem.TShirtID == 0 || cartItem.Quantity == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 	if err := h.cartRepository.Remove(id, &cartItem); err != nil {
