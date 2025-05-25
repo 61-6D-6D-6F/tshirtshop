@@ -16,8 +16,8 @@ type UserHandler struct {
 	userRepository repository.UserRepository
 }
 
-func NewUserHandler(s repository.UserRepository) *UserHandler {
-	return &UserHandler{userRepository: s}
+func NewUserHandler(r repository.UserRepository) *UserHandler {
+	return &UserHandler{userRepository: r}
 }
 
 func (h *UserHandler) ListUsers(c *gin.Context) {
@@ -134,6 +134,10 @@ func (h *UserHandler) Register(c *gin.Context) {
 	var user model.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if user.Username == "" || user.Password == "" || user.Email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 	err := h.userRepository.TryRegister(&user)

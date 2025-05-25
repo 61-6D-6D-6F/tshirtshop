@@ -31,3 +31,10 @@ type Cart struct {
 	UserID int        `json:"user_id"`
 	Items  []CartItem `json:"items"`
 }
+
+type Order struct {
+	OrderID int        `json:"order_id"`
+	UserID  int        `json:"user_id"`
+	Items   []CartItem `json:"items"`
+	Total   float64    `json:"total"`
+}

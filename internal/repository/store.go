@@ -1,10 +1,9 @@
 package repository
 
 import (
+	"database/sql"
 	"os"
 	"testing"
-
-	"database/sql"
 )
 
 func InitDB(db *sql.DB) error {
@@ -29,6 +28,16 @@ func InitDB(db *sql.DB) error {
 		tshirt_id INTEGER,
 		quantity INTEGER,
 		PRIMARY KEY(user_id, tshirt_id)
+	);
+    CREATE TABLE IF NOT EXISTS orders (
+		order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		total REAL
+	);
+	CREATE TABLE IF NOT EXISTS order_items (
+		order_id INTEGER,
+		tshirt_id INTEGER,
+		quantity INTEGER
 	);
     `)
 	// Ensure admin exists

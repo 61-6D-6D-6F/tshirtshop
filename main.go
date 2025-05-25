@@ -28,42 +28,52 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db)
-	userHandle := handler.NewUserHandler(userRepo)
+	userHandler := handler.NewUserHandler(userRepo)
 
 	tShirtRepo := repository.NewTShirtRepository(db)
-	tShirtHandle := handler.NewTShirtHandler(tShirtRepo)
+	tShirtHandler := handler.NewTShirtHandler(tShirtRepo)
 
 	cartRepo := repository.NewCartRepository(db)
-	cartHandle := handler.NewCartHandler(cartRepo)
+	cartHandler := handler.NewCartHandler(cartRepo)
+
+	orderRepo := repository.NewOrderRepository(db)
+	orderHandler := handler.NewOrderHandler(orderRepo)
 
 	r := gin.Default()
 
-	r.POST("/login", userHandle.Login)
-	r.POST("/register", userHandle.Register)
+	r.POST("/login", userHandler.Login)
+	r.POST("/register", userHandler.Register)
 
-	r.GET("/tshirts", tShirtHandle.ListTShirts)
-	r.GET("/tshirts/:id", tShirtHandle.GetTShirt)
+	r.GET("/tshirts", tShirtHandler.ListTShirts)
+	r.GET("/tshirts/:id", tShirtHandler.GetTShirt)
 
 	admin := r.Group("/admin")
 	admin.Use(handler.AdminMiddleware())
 	{
-		admin.POST("/tshirts", tShirtHandle.CreateTShirt)
-		admin.PUT("/tshirts/:id", tShirtHandle.UpdateTShirt)
-		admin.DELETE("/tshirts/:id", tShirtHandle.DeleteTShirt)
+		admin.POST("/tshirts", tShirtHandler.CreateTShirt)
+		admin.PUT("/tshirts/:id", tShirtHandler.UpdateTShirt)
+		admin.DELETE("/tshirts/:id", tShirtHandler.DeleteTShirt)
 
-		admin.GET("/users", userHandle.ListUsers)
-		admin.GET("/users/:id", userHandle.GetUser)
-		admin.POST("/users", userHandle.CreateUser)
-		admin.PUT("/users/:id", userHandle.UpdateUser)
-		admin.DELETE("/users/:id", userHandle.DeleteUser)
+		admin.GET("/users", userHandler.ListUsers)
+		admin.GET("/users/:id", userHandler.GetUser)
+		admin.POST("/users", userHandler.CreateUser)
+		admin.PUT("/users/:id", userHandler.UpdateUser)
+		admin.DELETE("/users/:id", userHandler.DeleteUser)
 	}
 
 	cart := r.Group("/cart")
 	cart.Use(handler.JWTAuthMiddleware())
 	{
-		cart.GET("/:userid", cartHandle.GetCart)
-		cart.POST("/:userid/add", cartHandle.AddToCart)
-		cart.DELETE("/:userid/remove", cartHandle.RemoveFromCart)
+		cart.GET("/:userid", cartHandler.GetCart)
+		cart.POST("/:userid/add", cartHandler.AddToCart)
+		cart.DELETE("/:userid/remove", cartHandler.RemoveFromCart)
+	}
+
+	order := r.Group("/order")
+	order.Use(handler.JWTAuthMiddleware())
+	{
+		order.GET("/:userid", orderHandler.ListOrders)
+		order.POST("/:userid/checkout", orderHandler.Checkout)
 	}
 
 	log.Println("Server running on :8080")
